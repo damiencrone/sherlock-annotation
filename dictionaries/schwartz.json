@@ -1,0 +1,12 @@
+{
+	"Power":["power","strength","control"],
+	"Achievement":["achievement","ambition","success"],
+	"Hedonism":["luxury","pleasure","delight"],
+	"Stimulation":["excitement","novelty","thrill"],
+	"Self direction":["independence","freedom","liberty"],
+	"Universalism":["unity","justice","equality"],
+	"Benevolence":["kindness","charity","mercy"],
+	"Tradition":["tradition","custom","respect"],
+	"Conformity":["restraint","regard","consideration"],
+	"Security":["security","safety","protection"]
+}

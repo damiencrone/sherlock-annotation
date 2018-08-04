@@ -1,0 +1,10 @@
+{
+	"Duty":["work","task","duty"],
+	"Intellect":["intellectual","aesthetic","thinking"],
+	"Adversity":["threat","criticism","accusation"],
+	"Mating":["romance","sexuality","love"],
+	"Positivity":["positive","pleasant","nice"],
+	"Negativity":["negative","unpleasant","bad"],
+	"Deception":["deceit","lie","dishonesty"],
+	"Sociality":["communication","interaction","social"]
+}

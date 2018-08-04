@@ -1,0 +1,118 @@
+---
+title: "Annotating Sherlock data according to major theories in personality and social psychology"
+output: html_notebook
+author: "Damien Crone"
+---
+
+```{r}
+
+source("custom_functions.R")
+dir.create(path = "data/", showWarnings = FALSE)
+dir.create(path = "output/plots/", showWarnings = FALSE)
+dir.create(path = "output/annotations/", showWarnings = FALSE)
+
+library(embeddingtools)
+max_vocab_size = 250000
+glove = loadModel(
+  file = "~/Desktop/glove_models/glove.6B.300d.txt",
+  max_vocab_size = max_vocab_size
+)
+
+```
+
+```{r}
+
+# Load data
+dat_fn = "data/Sherlock_Segments_1000_NN_2017.xlsx"
+
+if (!exists(dat_fn)) {
+  
+  dat_url = "https://github.com/Summer-MIND/mind_2018/raw/master/tutorials/sherlock_nifti_kit_v2_withdata/subjects/Sherlock_Segments_1000_NN_2017.xlsx"
+  download.file(url = dat_url, destfile = dat_fn)
+  
+}
+
+dat = readxl::read_xlsx(path = dat_fn)
+
+```
+
+```{r}
+
+# Create variable with scene number for each segment
+dat$scene_num = 0
+
+for (segment_num in 1:nrow(dat)) {
+  
+  if (!is.na(dat[segment_num, "Scene Segments"])) {
+    
+    ind = segment_num:nrow(dat)
+    dat$scene_num[ind] = dat$scene_num[ind] + 1
+    
+  }
+  
+}
+
+# Preprocess text
+dat$details_processed = removeWhiteSpace(
+  convertTextToGloveFormat(dat$`Scene Details - A Level`)
+)
+
+# Compute segment vectors
+segment_vec = computeTextVectors(
+  text_vec = dat$details_processed,
+  model = glove
+)
+
+```
+
+```{r}
+
+dictionary_list = list(
+  ABC      = read.csv("dictionaries/abc.csv", row.names = 1),
+  CAPTION  = read.csv("dictionaries/caption.csv", row.names = 1),
+  DIAMONDS = rjson::fromJSON(paste(readLines("dictionaries/diamonds.json"), collapse="")),
+  Schwartz = rjson::fromJSON(paste(readLines("dictionaries/schwartz.json"), collapse=""))
+)
+
+for (dictionary_name in names(dictionary_list)) {
+  
+  concept_vec = computeConceptRepresentation(
+    model = glove,
+    term_set = dictionary_list[[dictionary_name]]
+  )
+  
+  # Save concept representations
+  write.csv(
+    x = concept_vec,
+    file = paste0("data/concept_vec_", dictionary_name, ".csv")
+  )
+  
+  segment_concept_mat = computeTextConceptSimilarity(
+    text_representation = segment_vec,
+    concept_mat = concept_vec
+  )
+  
+  # Plot segment similarity
+  pdf(file = paste0("output/plots/", dictionary_name, "_dist.pdf"), width = 9, height = 9)
+  plotSegmentSimilarity(segment_concept_mat, dat)
+  dev.off()
+  
+  # Plot time courses
+  for (dimname in colnames(segment_concept_mat)) {
+    
+    pdf(file = paste0("output/plots/", dictionary_name, "_ts_", dimname, ".pdf"), width = 9, height = 4)
+    plotConceptTimeseries(segment_concept_mat, dat)
+    dev.off()
+      
+  }
+  
+  # Save annotations
+  write.csv(
+    x = segment_concept_mat,
+    file = paste0("output/annotations/", dictionary_name, ".csv")
+  )
+  
+}
+
+```
+
